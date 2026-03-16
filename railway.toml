@@ -1,10 +1,10 @@
 [build]
 builder = "nixpacks"
 watchPaths = ["apps/api/**"]
-buildCommand = "cd apps/api && python -m pip install -r requirements.txt && python -m playwright install chromium --with-deps"
+buildCommand = "cd apps/api && python3 -m pip install -r requirements.txt && python3 -m playwright install chromium --with-deps"
 
 [deploy]
-startCommand = "cd apps/api && python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+startCommand = "cd apps/api && python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
