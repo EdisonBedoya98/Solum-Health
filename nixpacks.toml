@@ -1,11 +1,12 @@
 [phases.setup]
-nixPkgs = ["python311Full", "nodejs_18", "pnpm"]
+nixPkgs = ["python311", "python311Packages.pip", "nodejs_18", "pnpm"]
 
 [phases.install]
 dependsOn = ["setup"]
 cmds = [
     "pnpm i --frozen-lockfile",
-    "python3 -m pip install -r apps/api/requirements.txt"
+    "pip --version || pip3 --version",
+    "pip install -r apps/api/requirements.txt || pip3 install -r apps/api/requirements.txt"
 ]
 
 [phases.build]
