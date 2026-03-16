@@ -23,15 +23,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Supabase
-supabase_url: str = os.getenv("SUPABASE_URL", "")
-supabase_key: str = os.getenv("SUPABASE_KEY", "")
-supabase: Client = create_client(supabase_url, supabase_key)
+# Initialize Supabase lazily
+def get_supabase() -> Client:
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+    if not url or not key:
+        print("⚠️ Warning: SUPABASE_URL or SUPABASE_KEY is missing")
+    return create_client(url or "", key or "")
 
-# Initialize Gemini
-google_api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=google_api_key)
-model = genai.GenerativeModel('gemini-2.5-flash')
+def get_gemini_model():
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if not google_api_key:
+         print("⚠️ Warning: GOOGLE_API_KEY is missing")
+    genai.configure(api_key=google_api_key or "MOCK_KEY")
+    return genai.GenerativeModel('gemini-2.0-flash')
 
 # Pydantic Models for Form Submission
 class Medication(BaseModel):
@@ -115,6 +120,7 @@ async def upload_document(file: UploadFile = File(...)):
     
     # 2. Upload to Supabase Storage
     try:
+        supabase = get_supabase()
         content = await file.read()
         supabase.storage.from_("medical-documents").upload(
             path=file_path,
@@ -136,6 +142,7 @@ async def upload_document(file: UploadFile = File(...)):
 
 @app.post("/extract/{document_id}")
 async def extract_data(document_id: str):
+    supabase = get_supabase()
     # 1. Fetch document info
     doc_res = supabase.table("documents").select("*").eq("id", document_id).single().execute()
     if not doc_res.data:
@@ -171,6 +178,7 @@ async def extract_data(document_id: str):
         # Determine mime type
         mime_type = "application/pdf" if file_path.endswith(".pdf") else "image/jpeg"
         
+        model = get_gemini_model()
         response = model.generate_content([
             prompt,
             {"mime_type": mime_type, "data": file_content}
@@ -196,6 +204,7 @@ async def extract_data(document_id: str):
 
 @app.post("/submit-request")
 async def submit_request(data: ServiceRequestSubmission):
+    supabase = get_supabase()
     try:
         # 1. Save to service_requests
         req_data = data.model_dump()
@@ -229,7 +238,6 @@ async def submit_request(data: ServiceRequestSubmission):
             supabase.table("service_request_assessments").insert(assessments).execute()
             
         # 4. Track Accuracy (Compare with initial_values)
-        # Only track meaningful form fields — skip confidence scores, metadata, and nested objects
         SKIP_FIELDS = {
             "document_id", "request_id", "medications", "assessments",
             "initial_values", "created_at", "updated_at", "status",
@@ -239,21 +247,17 @@ async def submit_request(data: ServiceRequestSubmission):
         accuracy_logs = []
 
         def normalize(v) -> str:
-            """Normalize a value for comparison: None, 'None', and '' all become ''."""
             if v is None:
                 return ""
             s = str(v).strip()
             return "" if s.lower() in ("none", "null") else s
 
         for field in initial_values:
-            # Skip confidence score suffixes
             if field.endswith("_confidence"):
                 continue
-            # Skip metadata / nested fields
             if field in SKIP_FIELDS:
                 continue
             final_val = req_data.get(field)
-            # Skip lists and dicts
             if isinstance(final_val, (list, dict)) or isinstance(initial_values[field], (list, dict)):
                 continue
 
@@ -289,7 +293,7 @@ async def submit_request(data: ServiceRequestSubmission):
 
 @app.get("/requests")
 async def list_requests():
-    """List all submitted service requests with summary info."""
+    supabase = get_supabase()
     try:
         res = supabase.table("service_requests")\
             .select("id, created_at, member_name, payer_name, request_date, provider_name, diagnosis_descriptions, start_date, end_date, service_type, document_id")\
@@ -301,13 +305,12 @@ async def list_requests():
 
 @app.get("/requests/{request_id}/pdf")
 async def get_request_pdf(request_id: str):
-    """Regenerate the PDF for a specific service request."""
+    supabase = get_supabase()
     try:
         res = supabase.table("service_requests").select("*").eq("id", request_id).single().execute()
         if not res.data:
             raise HTTPException(status_code=404, detail="Request not found")
 
-        # Also fetch medications and assessments
         meds_res = supabase.table("service_request_medications").select("*").eq("request_id", request_id).execute()
         asm_res = supabase.table("service_request_assessments").select("*").eq("request_id", request_id).execute()
 
