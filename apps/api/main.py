@@ -36,7 +36,7 @@ def get_gemini_model():
     if not google_api_key:
          print("⚠️ Warning: GOOGLE_API_KEY is missing")
     genai.configure(api_key=google_api_key or "MOCK_KEY")
-    return genai.GenerativeModel('gemini-2.0-flash')
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 # Pydantic Models for Form Submission
 class Medication(BaseModel):
