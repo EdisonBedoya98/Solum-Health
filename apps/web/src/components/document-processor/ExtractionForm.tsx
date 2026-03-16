@@ -7,13 +7,76 @@ interface ExtractionFormProps {
   onSuccess: () => void;
 }
 
+interface Medication {
+  name: string;
+  dose: string;
+  frequency: string;
+  prescriber: string;
+}
+
+interface Assessment {
+  tool_name: string;
+  score: string;
+  assessment_date: string;
+}
+
+interface ExtractionData {
+  payer_name: string;
+  request_date: string;
+  payer_fax: string;
+  payer_phone: string;
+  member_name: string;
+  member_dob: string;
+  member_gender: string;
+  member_id: string;
+  group_number: string;
+  member_phone: string;
+  member_address: string;
+  provider_name: string;
+  provider_npi: string;
+  provider_facility: string;
+  provider_tax_id: string;
+  provider_phone: string;
+  provider_fax: string;
+  provider_address: string;
+  referring_provider_name: string;
+  referring_provider_npi: string;
+  referring_provider_phone: string;
+  service_type: string;
+  service_setting: string;
+  cpt_codes: string[];
+  icd10_codes: string[];
+  diagnosis_descriptions: string;
+  start_date: string;
+  end_date: string;
+  num_sessions_units: number;
+  frequency: string;
+  presenting_symptoms: string;
+  clinical_history: string;
+  treatment_goals: string;
+  medical_necessity: string;
+  risk_justification: string;
+  medications: Medication[];
+  assessments: Assessment[];
+  attestation_signature_name: string;
+  attestation_date: string;
+  license_number: string;
+  [key: string]:
+    | string
+    | number
+    | string[]
+    | Medication[]
+    | Assessment[]
+    | undefined;
+}
+
 export const ExtractionForm: React.FC<ExtractionFormProps> = ({
   documentId,
   onSuccess,
 }) => {
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<ExtractionData | null>(null);
   console.log("🚀 ~ ExtractionForm ~ formData:", formData);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<ExtractionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +96,16 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
           },
         );
         if (!response.ok) throw new Error("Extraction failed");
-        const data = await response.json();
+        const data = (await response.json()) as ExtractionData;
 
         setFormData(data);
         setInitialData(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError(String(err));
+        }
       } finally {
         setLoading(false);
       }
@@ -47,8 +114,11 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
     fetchExtraction();
   }, [documentId]);
 
-  const handleChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
+  const handleChange = (field: string, value: string | number) => {
+    setFormData((prev) => {
+      if (!prev) return null;
+      return { ...prev, [field]: value };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,8 +152,12 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
         const pdfUrl = URL.createObjectURL(blob);
         setPreviewPdfUrl(pdfUrl);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -124,8 +198,10 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
     fieldName: string,
     type: string = "text",
   ) => {
+    if (!formData) return null;
+
     const confidenceField = `${fieldName}_confidence`;
-    const confidence = formData[confidenceField];
+    const confidence = formData[confidenceField] as number | undefined;
     const isLowConfidence = confidence !== undefined && confidence < 0.7;
 
     return (
@@ -157,7 +233,7 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
               ? "border-amber-500/30 bg-amber-500/5 text-amber-200"
               : "border-zinc-800 bg-black/40 text-white hover:border-zinc-700"
           }`}
-          value={formData[fieldName] || ""}
+          value={(formData[fieldName] as string | number) || ""}
           onChange={(e) => handleChange(fieldName, e.target.value)}
         />
       </div>
