@@ -27,7 +27,9 @@ export default function RequestsPage() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await fetch("http://localhost:8000/requests");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/requests`,
+        );
         const data = await res.json();
         setRequests(data.requests || []);
       } catch (err) {
@@ -45,7 +47,7 @@ export default function RequestsPage() {
     setPdfUrl(null);
     try {
       const res = await fetch(
-        `http://localhost:8000/requests/${requestId}/pdf`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/requests/${requestId}/pdf`,
       );
       const data = await res.json();
       if (data.pdf_base64) {

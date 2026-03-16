@@ -90,7 +90,7 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/extract/${documentId}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/extract/${documentId}`,
           {
             method: "POST",
           },
@@ -126,15 +126,18 @@ export const ExtractionForm: React.FC<ExtractionFormProps> = ({
     setSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8000/submit-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          document_id: documentId,
-          initial_values: initialData,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/submit-request`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            document_id: documentId,
+            initial_values: initialData,
+          }),
+        },
+      );
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Submission failed");

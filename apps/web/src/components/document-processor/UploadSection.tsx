@@ -23,17 +23,24 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8000/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       if (!response.ok) throw new Error("Upload failed");
 
       const data = await response.json();
       onUploadSuccess(data.document_id);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
     } finally {
       setUploading(false);
     }
