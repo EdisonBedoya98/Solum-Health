@@ -229,18 +229,45 @@ async def submit_request(data: ServiceRequestSubmission):
             supabase.table("service_request_assessments").insert(assessments).execute()
             
         # 4. Track Accuracy (Compare with initial_values)
+        # Only track meaningful form fields — skip confidence scores, metadata, and nested objects
+        SKIP_FIELDS = {
+            "document_id", "request_id", "medications", "assessments",
+            "initial_values", "created_at", "updated_at", "status",
+            "auth_number", "decision", "reviewer_name", "decision_date",
+        }
+        
         accuracy_logs = []
-        for field, final_val in req_data.items():
-            if field in initial_values:
-                initial_val = initial_values[field]
-                was_corrected = str(initial_val) != str(final_val)
-                accuracy_logs.append({
-                    "document_id": data.document_id,
-                    "field_name": field,
-                    "initial_value": str(initial_val),
-                    "final_value": str(final_val),
-                    "was_corrected": was_corrected
-                })
+
+        def normalize(v) -> str:
+            """Normalize a value for comparison: None, 'None', and '' all become ''."""
+            if v is None:
+                return ""
+            s = str(v).strip()
+            return "" if s.lower() in ("none", "null") else s
+
+        for field in initial_values:
+            # Skip confidence score suffixes
+            if field.endswith("_confidence"):
+                continue
+            # Skip metadata / nested fields
+            if field in SKIP_FIELDS:
+                continue
+            final_val = req_data.get(field)
+            # Skip lists and dicts
+            if isinstance(final_val, (list, dict)) or isinstance(initial_values[field], (list, dict)):
+                continue
+
+            str_initial = normalize(initial_values[field])
+            str_final = normalize(final_val)
+            was_corrected = str_initial != str_final
+
+            accuracy_logs.append({
+                "document_id": data.document_id,
+                "field_name": field,
+                "initial_value": str_initial,
+                "final_value": str_final,
+                "was_corrected": was_corrected
+            })
         
         if accuracy_logs:
             supabase.table("extraction_accuracy_logs").insert(accuracy_logs).execute()
@@ -257,5 +284,39 @@ async def submit_request(data: ServiceRequestSubmission):
             "request_id": request_id,
             "pdf_base64": pdf_base64
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/requests")
+async def list_requests():
+    """List all submitted service requests with summary info."""
+    try:
+        res = supabase.table("service_requests")\
+            .select("id, created_at, member_name, payer_name, request_date, provider_name, diagnosis_descriptions, start_date, end_date, service_type, document_id")\
+            .order("created_at", desc=True)\
+            .execute()
+        return {"requests": res.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/requests/{request_id}/pdf")
+async def get_request_pdf(request_id: str):
+    """Regenerate the PDF for a specific service request."""
+    try:
+        res = supabase.table("service_requests").select("*").eq("id", request_id).single().execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Request not found")
+
+        # Also fetch medications and assessments
+        meds_res = supabase.table("service_request_medications").select("*").eq("request_id", request_id).execute()
+        asm_res = supabase.table("service_request_assessments").select("*").eq("request_id", request_id).execute()
+
+        req_data = res.data
+        req_data["medications"] = meds_res.data or []
+        req_data["assessments"] = asm_res.data or []
+
+        pdf_bytes = await generate_pdf_from_html(req_data)
+        pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+        return {"pdf_base64": pdf_base64}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
