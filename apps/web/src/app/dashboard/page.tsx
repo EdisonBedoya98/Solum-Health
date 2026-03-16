@@ -1,3 +1,6 @@
+"use client";
+export const dynamic = "force-dynamic";
+
 import { AccuracyDashboard } from "@/components/document-processor/AccuracyDashboard";
 
 export default function DashboardPage() {
