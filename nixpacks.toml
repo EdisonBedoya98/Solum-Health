@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["python3", "python311Packages.pip", "nodejs", "pnpm"]
+nixPkgs = ["python311Full", "nodejs_18", "pnpm"]
 
 [phases.install]
 dependsOn = ["setup"]
