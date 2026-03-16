@@ -1,3 +1,5 @@
+"use client";
+
 import { AccuracyDashboard } from "@/components/document-processor/AccuracyDashboard";
 
 export default function DashboardPage() {
