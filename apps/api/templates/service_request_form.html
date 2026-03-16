@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Request Form</title>
+    <!-- Use Tailwind CSS for rapid exact styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @page {
+        size: letter;
+        margin: 0;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: black;
+        padding: 1in;
+      }
+      .header-title {
+        color: #1a4f80; /* Dark blue */
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .section-header {
+        background-color: #1a4f80;
+        color: white;
+        font-weight: bold;
+        padding: 4px 8px;
+        margin-top: 15px;
+        margin-bottom: 10px;
+      }
+      .field-row {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 8px;
+      }
+      .field-label {
+        font-weight: bold;
+        color: #1a4f80;
+        white-space: nowrap;
+        margin-right: 8px;
+      }
+      .field-value {
+        flex-grow: 1;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 2px;
+        min-height: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header-title">REQUEST FOR APPROVAL OF SERVICES</div>
+
+    <div class="flex gap-4 mb-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Payer:</span>
+        <span class="field-value">{{ payer_name or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Date of Request:</span>
+        <span class="field-value">{{ request_date or '' }}</span>
+      </div>
+    </div>
+    <div class="flex gap-4 mb-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Payer Fax:</span>
+        <span class="field-value">{{ payer_fax or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Payer Phone:</span>
+        <span class="field-value">{{ payer_phone or '' }}</span>
+      </div>
+    </div>
+
+    <!-- SECTION A -->
+    <div class="section-header">SECTION A: MEMBER INFORMATION</div>
+
+    <div class="field-row">
+      <span class="field-label">Member Name (Last, First, MI):</span>
+      <span class="field-value">{{ member_name or '' }}</span>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">DOB:</span>
+        <span class="field-value text-center">{{ member_dob or '' }}</span>
+      </div>
+      <div class="field-row flex-1 w-1/4">
+        <span class="field-label">Gender:</span>
+        <span class="field-value text-center">{{ member_gender or '' }}</span>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Member ID:</span>
+        <span class="field-value">{{ member_id or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Group Number:</span>
+        <span class="field-value">{{ group_number or '' }}</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <span class="field-label">Phone Number:</span>
+      <span class="field-value">{{ member_phone or '' }}</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Address:</span>
+      <span class="field-value">{{ member_address or '' }}</span>
+    </div>
+
+    <!-- SECTION B -->
+    <div class="section-header">SECTION B: REQUESTING PROVIDER INFORMATION</div>
+
+    <div class="field-row">
+      <span class="field-label">Provider Name:</span>
+      <span class="field-value">{{ provider_name or '' }}</span>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Provider NPI:</span>
+        <span class="field-value">{{ provider_npi or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Facility/Practice Name:</span>
+        <span class="field-value">{{ provider_facility or '' }}</span>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Tax ID:</span>
+        <span class="field-value">{{ provider_tax_id or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Phone:</span>
+        <span class="field-value">{{ provider_phone or '' }}</span>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Fax:</span>
+        <span class="field-value">{{ provider_fax or '' }}</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <span class="field-label">Address:</span>
+      <span class="field-value">{{ provider_address or '' }}</span>
+    </div>
+
+    <!-- SECTION C -->
+    <div class="section-header">
+      SECTION C: REFERRING PROVIDER (if different)
+    </div>
+
+    <div class="field-row">
+      <span class="field-label">Referring Provider Name:</span>
+      <span class="field-value">{{ referring_provider_name or '' }}</span>
+    </div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Referring Provider NPI:</span>
+        <span class="field-value">{{ referring_provider_npi or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Phone:</span>
+        <span class="field-value">{{ referring_provider_phone or '' }}</span>
+      </div>
+    </div>
+
+    <!-- SECTION D -->
+    <div class="section-header">SECTION D: SERVICE INFORMATION</div>
+
+    <div class="flex gap-4">
+      <div class="field-row flex-1">
+        <span class="field-label">Type of Service Requested:</span>
+        <span class="field-value">{{ service_type or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Service Setting:</span>
+        <span class="field-value">{{ service_setting or '' }}</span>
+      </div>
+    </div>
+
+    <div class="field-row mt-2">
+      <span class="field-label">CPT/HCPCS Code(s):</span>
+      <span class="field-value"
+        >{{ cpt_codes | join(', ') if cpt_codes else '' }}</span
+      >
+    </div>
+
+    <div class="field-row mt-2">
+      <span class="field-label">ICD-10 Diagnosis Code(s):</span>
+      <span class="field-value"
+        >{{ icd10_codes | join(', ') if icd10_codes else '' }}</span
+      >
+    </div>
+
+    <div class="field-row mt-2">
+      <span class="field-label">Diagnosis Description(s):</span>
+      <span class="field-value">{{ diagnosis_descriptions or '' }}</span>
+    </div>
+
+    <div class="flex gap-4 mt-2">
+      <div class="field-row flex-1">
+        <span class="field-label">Requested Start Date:</span>
+        <span class="field-value">{{ start_date or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Requested End Date:</span>
+        <span class="field-value">{{ end_date or '' }}</span>
+      </div>
+    </div>
+
+    <div class="flex gap-4 mt-2">
+      <div class="field-row flex-1">
+        <span class="field-label">Number of Sessions/Units:</span>
+        <span class="field-value">{{ num_sessions_units or '' }}</span>
+      </div>
+      <div class="field-row flex-1">
+        <span class="field-label">Frequency:</span>
+        <span class="field-value">{{ frequency or '' }}</span>
+      </div>
+    </div>
+
+    <!-- ATTESTATION -->
+    <div class="mt-12">
+      <p class="font-bold text-[#1a4f80] mb-6">Provider Attestation:</p>
+      <p class="mb-8">
+        By signing below, I certify that the information provided is accurate
+        and medically necessary.
+      </p>
+
+      <div class="flex gap-4">
+        <div class="field-row flex-2 w-1/2">
+          <span class="field-label">Signature/Name:</span>
+          <span class="field-value font-italic"
+            >{{ attestation_signature_name or '' }}</span
+          >
+        </div>
+        <div class="field-row flex-1 w-1/4">
+          <span class="field-label">Date:</span>
+          <span class="field-value text-center"
+            >{{ attestation_date or '' }}</span
+          >
+        </div>
+        <div class="field-row flex-1 w-1/4">
+          <span class="field-label">License #:</span>
+          <span class="field-value text-center"
+            >{{ license_number or '' }}</span
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

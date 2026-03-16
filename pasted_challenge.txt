@@ -1,0 +1,15 @@
+  Build a web application that:
+
+  1. Extracts structured data from uploaded documents. Accept uploads of clinical/medical documents (PDFs, images, scanned forms). Use OCR and/or AI to extract key fields such as:
+    - Patient name, DOB, gender, contact info
+    - Insurance company, member ID, group number
+    - Provider name, NPI, facility info
+    - Diagnosis codes (ICD-10) and descriptions
+    - CPT/procedure codes
+    - Medications, assessment scores, clinical history
+
+  2. Auto-fills a service request form. Take the extracted data and automatically populate a "Request for Approval of Services" form (template provided). The user should be able to review, correct, and pprove the pre-filled data before saving.
+
+  3. Handles confidence and ambiguity. Flag fields where extraction was uncertain or data was missing. Make it easy for the user to see what was auto-filled vs. what needs manual input.
+
+  4. Tracks accuracy. A simple view showing how often users correct auto-filled fields, so we can measure extraction quality over time.

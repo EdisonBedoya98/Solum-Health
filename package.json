@@ -1,0 +1,10 @@
+{
+  "name": "solum-health-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "cd apps/api && uvicorn main:app --reload",
+    "dev": "pnpm run dev:web & pnpm run dev:api"
+  }
+}
