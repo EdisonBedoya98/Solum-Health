@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["python3", "nodejs", "pnpm"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = [
+    "pnpm i --frozen-lockfile",
+    "python3 -m pip install -r apps/api/requirements.txt"
+]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["python3 -m playwright install chromium --with-deps"]
+
+[start]
+cmd = "cd apps/api && python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT"
