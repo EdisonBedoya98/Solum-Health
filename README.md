@@ -48,6 +48,49 @@ graph TD
     P -->|Base64 Encoded Response| L
 ```
 
+## 🧩 Modules Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend [Next.js Web Client]
+        UI_Upload[Document Uploader & Validator]
+        UI_Review[Interactive Accuracy Form]
+        UI_Dash[Global Requests Dashboard]
+        UI_PDF[PDF Document Viewer]
+    end
+
+    subgraph Backend [FastAPI Server]
+        API[REST API Router Layer]
+
+        subgraph Logic [Core Business Logic]
+            StorageService[File Manager Service]
+            OCRService[Gemini 2.5 OCR Engine]
+            PDFGen[Playwright Jinja2 Generator]
+            FeedbackEngine[Accuracy Metrics Engine]
+        end
+
+    end
+
+    subgraph External [External Infrastructure]
+        DB[(Supabase PostgreSQL)]
+        Bucket[(Supabase Storage)]
+        LLM{Google Gemini API}
+    end
+
+    %% Key Relationships
+    UI_Upload --> |File Buffer| API
+    UI_Review --> |Correction Data| API
+    UI_Dash --> |Fetch List| API
+    UI_PDF --> |Request PDF| API
+
+    API --> StorageService & OCRService & PDFGen & FeedbackEngine
+
+    StorageService <--> |Save/Fetch| Bucket
+    OCRService <--> |Multimodal Analysis| LLM
+    FeedbackEngine <--> |Logs Diffs| DB
+    PDFGen --> |Reads Data| DB
+```
+
 ## ⚙️ Core Modules & Architecture Features
 
 ### 1. Document Upload & Storage
@@ -135,6 +178,7 @@ solum-health/
 
 4. **Run Application:**
    - From the repository root, start the development server for both frontend and backend:
+
    ```bash
    pnpm dev
    ```
