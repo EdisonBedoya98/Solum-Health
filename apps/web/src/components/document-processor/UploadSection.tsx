@@ -11,9 +11,9 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
 }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const processFile = async (file: File) => {
     if (!file) return;
 
     setUploading(true);
@@ -46,8 +46,47 @@ export const UploadSection: React.FC<UploadSectionProps> = ({
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processFile(file);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed border-zinc-800 rounded-3xl bg-zinc-900/30 hover:bg-zinc-900/50 hover:border-blue-500/50 transition-all group">
+    <div
+      className={`flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed rounded-3xl transition-all group ${
+        isDragging
+          ? 'border-blue-500 bg-blue-500/10 scale-[1.02]'
+          : 'border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/50 hover:border-blue-500/50'
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/20 group-hover:scale-110 transition-transform">
         <svg
           xmlns="http://www.w3.org/2000/svg"
