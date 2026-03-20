@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
 
 interface FieldMetric {
   field: string;
@@ -10,61 +9,35 @@ interface FieldMetric {
   corrections: number;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export const AccuracyDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<FieldMetric[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Overall computed stats
-  const totalFields = metrics.reduce((s, m) => s + (Number(m.total) || 0), 0);
-  const totalCorrections = metrics.reduce(
-    (s, m) => s + (Number(m.corrections) || 0),
-    0,
-  );
-  const overallAccuracyNum =
-    totalFields > 0
-      ? ((totalFields - totalCorrections) / totalFields) * 100
-      : null;
-  const overallAccuracy =
-    overallAccuracyNum !== null && !isNaN(overallAccuracyNum)
-      ? overallAccuracyNum.toFixed(1)
-      : null;
+  const [overallAccuracy, setOverallAccuracy] = useState<string | null>(null);
+  const [totalFields, setTotalFields] = useState(0);
+  const [totalCorrections, setTotalCorrections] = useState(0);
 
   useEffect(() => {
     const fetchMetrics = async () => {
-      const { data } = await supabase
-        .from("extraction_accuracy_logs")
-        .select("*");
+      try {
+        const res = await fetch(`${API_URL}/accuracy-logs`);
+        if (!res.ok) throw new Error("Failed to fetch accuracy logs");
+        const data = await res.json();
 
-      if (data) {
-        const grouped = data.reduce(
-          (
-            acc: Record<string, { total: number; corrections: number }>,
-            log,
-          ) => {
-            if (!acc[log.field_name])
-              acc[log.field_name] = { total: 0, corrections: 0 };
-            acc[log.field_name].total += 1;
-            if (log.was_corrected) acc[log.field_name].corrections += 1;
-            return acc;
-          },
-          {},
+        setMetrics(
+          data.metrics.map((m: { field: string; accuracy: number; total: number; corrections: number }) => ({
+            ...m,
+            accuracy: m.accuracy.toFixed(1),
+          })),
         );
-
-        const formatted: FieldMetric[] = Object.keys(grouped)
-          .map((field) => {
-            const total = Number(grouped[field].total) || 0;
-            const corrections = Number(grouped[field].corrections) || 0;
-            const pct = total > 0 ? ((total - corrections) / total) * 100 : 0;
-            return {
-              field,
-              accuracy: isNaN(pct) ? "0.0" : pct.toFixed(1),
-              total,
-              corrections,
-            };
-          })
-          .sort((a, b) => parseFloat(a.accuracy) - parseFloat(b.accuracy));
-
-        setMetrics(formatted);
+        setOverallAccuracy(
+          data.overall_accuracy !== null ? data.overall_accuracy.toFixed(1) : null,
+        );
+        setTotalFields(data.total_fields);
+        setTotalCorrections(data.total_corrections);
+      } catch (err) {
+        console.error("Error fetching accuracy metrics:", err);
       }
       setLoading(false);
     };

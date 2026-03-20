@@ -291,6 +291,55 @@ async def submit_request(data: ServiceRequestSubmission):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/accuracy-logs")
+async def get_accuracy_logs():
+    supabase = get_supabase()
+    try:
+        res = supabase.table("extraction_accuracy_logs").select("*").execute()
+        logs = res.data or []
+
+        # Group by field_name and compute per-field metrics
+        grouped: dict[str, dict] = {}
+        for log in logs:
+            field = log["field_name"]
+            if field not in grouped:
+                grouped[field] = {"total": 0, "corrections": 0}
+            grouped[field]["total"] += 1
+            if log.get("was_corrected"):
+                grouped[field]["corrections"] += 1
+
+        metrics = []
+        for field, counts in grouped.items():
+            total = counts["total"]
+            corrections = counts["corrections"]
+            accuracy = ((total - corrections) / total * 100) if total > 0 else 0
+            metrics.append({
+                "field": field,
+                "accuracy": round(accuracy, 1),
+                "total": total,
+                "corrections": corrections,
+            })
+
+        # Sort by accuracy ascending (worst first)
+        metrics.sort(key=lambda m: m["accuracy"])
+
+        total_fields = sum(m["total"] for m in metrics)
+        total_corrections = sum(m["corrections"] for m in metrics)
+        overall_accuracy = (
+            round((total_fields - total_corrections) / total_fields * 100, 1)
+            if total_fields > 0
+            else None
+        )
+
+        return {
+            "metrics": metrics,
+            "overall_accuracy": overall_accuracy,
+            "total_fields": total_fields,
+            "total_corrections": total_corrections,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/requests")
 async def list_requests():
     supabase = get_supabase()
